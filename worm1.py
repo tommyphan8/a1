@@ -5,6 +5,8 @@ import nmap
 import netinfo
 import os
 import sys
+import socket, fcntl, struct
+import netifaces
 
 # The list of credentials to attempt
 credList = [
@@ -149,7 +151,19 @@ def getMyIP(interface):
 	
 	# TODO: Change this to retrieve and
 	# return the IP of the current system.
-	return None
+	
+	networkInterfaces = netifaces.interfaces()
+	ipAddr = None
+	for netFace in networkInterfaces:
+		addr = netifaces.ifaddresses(netFace)[2][0]['addr']
+		if not addr == "127.0.0.1":
+		ipAddr = addr
+		break
+	return ipAddr
+	
+#TEST IP
+print ("This systems ip address is: ")
+print getMyIP()
 
 #######################################################
 # Returns the list of systems on the same network
