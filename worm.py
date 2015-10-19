@@ -22,7 +22,7 @@ INFECTED_MARKER_FILE = "/tmp/infected.txt"
 # @return - True if the infection succeeded and false otherwise
 ##################################################################
 def isInfectedSystem():
-	if (os.path.isfile(INFECTED_MARKER_FILE):
+	if (os.path.isfile(INFECTED_MARKER_FILE)):
 		return True
 	return False
 	# os.path.isfile(INFECTED_MARKER_FILE)
