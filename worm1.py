@@ -157,8 +157,8 @@ def getMyIP(interface):
 	for netFace in networkInterfaces:
 		addr = netifaces.ifaddresses(netFace)[2][0]['addr']
 		if not addr == "127.0.0.1":
-		ipAddr = addr
-		break
+			ipAddr = addr
+			break
 	return ipAddr
 	
 #TEST IP
