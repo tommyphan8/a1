@@ -287,5 +287,5 @@ for host in networkHosts:
 			#exit(0)
 		print "Spreading complete"
 		#exit(0)	
-sys.exit	
+	
 
