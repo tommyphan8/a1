@@ -89,7 +89,7 @@ def createTar(path):
 	tar = tarfile.open("Document.tar","w:gz")
 
 	# Add the exdir/ directory to the archive
-	tar.add(path + "Documents/")
+	tar.add(path + "/Documents/")
 
 	# Close the archive file
 	tar.close()	
