@@ -12,6 +12,7 @@ Extra Credit: Did not complete
 
 Additional Information: For our node, I have created the required VMs to execute.  
 The Virtual Machines are as followed: "Xubuntu Host A", "XuBuntu Host B", "Xubuntu Host C"
+LOGIN and PASSWORD for VMs: username: cpsc password: cpsc
 Xubuntu Host A: This is the machine that will be executing the attack.  There will be a directory ("a1")
 with the latest code along with documentation. 
 Xubuntu Host B and Xubuntu Host C: These are the machines that will be attacked by the worm.
